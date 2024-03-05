@@ -1,0 +1,24 @@
+{
+    "name": "localhost-server",
+    "version": "1.0.0",
+    "description": "Server to handle data sent from PixelGraph-extension",
+    "main": "server.js",
+    "scripts": {
+        "start": "node server.js"
+    },
+    "author": "Yash Vekaria",
+    "license": "ISC",
+    "dependencies": {
+        "abstract-syntax-tree": "^2.20.6",
+        "body-parser": "^1.19.0",
+        "cors": "^2.8.5",
+        "express": "^4.17.1",
+        "js-beautify": "^1.14.6",
+        "jsonfile": "^6.1.0",
+        "mongodb": "^3.6.4",
+        "sqlite3": "^5.1.6"
+    },
+    "devDependencies": {
+        "husky": "^8.0.1"
+    }
+}
