@@ -2,7 +2,7 @@
     "manifest_version": 2,
     "version": "1.0",
     "name": "PixelGraph",
-    "description": "Tracks iframe creation, injections, and interactions on webpages",
+    "description": "Fingerprinting invisible pixel usage for online surveillance",
     "permissions": [
         "webRequest", 
         "webNavigation", 
