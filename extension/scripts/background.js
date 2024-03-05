@@ -29,9 +29,9 @@ async function xhrSend(url, headers, method, postData, success, error) {
     }
 }
 
-
-function onEvent(debuggeeId, message, params) {
-    if (tabId != debuggeeId.tabId)
+// Listening for and capturing Network events
+function onEvent(debugId, message, params) {
+    if (tabId != debugId.tabId)
         return;
     if (message == "Network.requestWillBeSent") {
         if (!params.request.url.includes('localhost')) {
@@ -54,11 +54,11 @@ function onEvent(debuggeeId, message, params) {
                     "Content-Type": "application/json"
                 }
             }).then(res => {
-                console.log("Request complete! response");
+                console.log("request data collected.");
             });
         }
     } else if (message == "Network.requestWillBeSentExtraInfo") {
-        fetch(`http://localhost:${port}/requestinfo`, {
+        fetch(`http://localhost:${port}/requestInfo`, {
             method: "POST",
             body: JSON.stringify({
                 "request_id": params.requestId,
@@ -73,9 +73,8 @@ function onEvent(debuggeeId, message, params) {
                 "Content-Type": "application/json"
             }
         }).then(res => {
-            console.log("RequestInfo complete! response");
+            console.log("requestInfo data collected.");
         });
-
     } 
     else if (message == "Network.responseReceived") {
         chrome.debugger.sendCommand({
@@ -83,7 +82,6 @@ function onEvent(debuggeeId, message, params) {
         }, "Network.getResponseBody", {
             "requestId": params.requestId
         }, function(response) {
-            // you get the response body here!
             fetch(`http://localhost:${port}/response`, {
                 method: "POST",
                 body: JSON.stringify({
@@ -97,13 +95,13 @@ function onEvent(debuggeeId, message, params) {
                     "Content-Type": "application/json"
                 }
             }).then(res => {
-                console.log("Response complete! response");
+                console.log("response data collected.");
             });
         });
     }
-
+    // Capturing execution of any script
     if (message == "Debugger.scriptParsed") {
-        fetch(`http://localhost:${port}/scriptid`, {
+        fetch(`http://localhost:${port}/scriptId`, {
             method: "POST",
             body: JSON.stringify({
                 "scriptId": params.scriptId,
@@ -115,28 +113,10 @@ function onEvent(debuggeeId, message, params) {
                 "Content-Type": "application/json"
             }
         }).then(res => {
-            console.log("scriptids complete! response");
+            console.log("scriptId data collected.");
         });
-
-        const url = chrome.extension.getURL('breakpoint.json');
-        fetch(url)
-            .then((response) => response.json())
-            .then((json) => {
-                for (let i = 0; i < json.length; i++) {
-                    if (json[i].url == params.url) {
-                        chrome.debugger.sendCommand({
-                            tabId: debuggeeId.tabId
-                        }, 'Debugger.setBreakpointByUrl', json[i], (resp) => {
-                            if (chrome.runtime.lastError) {
-                                console.log(json[i])
-                                console.log(chrome.runtime.lastError.message);
-                            }
-                        })
-                    }
-                }
-            });
     }
-
+    // Handling to resume the debugger in case of set breakpoints or error
     if (message == "Debugger.paused") {
         fetch(`http://localhost:${port}/debug`, {
             method: "POST",
@@ -154,10 +134,9 @@ function onEvent(debuggeeId, message, params) {
             }
         }).then(res => {
             chrome.debugger.sendCommand({
-                tabId: debuggeeId.tabId
+                tabId: debugId.tabId
             }, 'Debugger.resume');
         });
-
     }
 }
 
