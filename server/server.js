@@ -55,17 +55,8 @@ async function saveResponse(receivedHTTPResponse, website) {
 }
 
 async function saveStorage(receivedStorageInfo, website) {
-    const filename = 'output/' + website + '/localStorage.json';
+    const filename = 'output/' + website + '/storage.json';
     jsonfile.writeFile(filename, receivedStorageInfo, {
-        flag: 'a'
-    }, function(err) {
-        if (err) console.error(err);
-    })
-}
-
-async function debugInfo(receivedDebugInfo, website) {
-    const filename = 'output/' + website + '/debug.json';
-    jsonfile.writeFile(filename, receivedDebugInfo, {
         flag: 'a'
     }, function(err) {
         if (err) console.error(err);
@@ -102,7 +93,7 @@ async function saveScriptId(receivedScriptInfo, website) {
 // Listening for incoming requests
 
 app.post('/request', (req, res) => {
-    if (req.body.http_req != `http://localhost:${port}/localStorage`) {
+    if (req.body.http_req != `http://localhost:${port}/storage`) {
         req.body.top_level_url = website[0];
         saveRequest(req.body, website[0]);
     }
@@ -119,9 +110,9 @@ app.post('/response', (req, res) => {
     res.send("response-success");
 })
 
-app.post('/localStorage', (req, res) => {
+app.post('/storage', (req, res) => {
     saveStorage(req.body, website[0]);
-    res.send("localStorage-success");
+    res.send("storage-success");
 })
 
 app.post('/eventSet', (req, res) => {
@@ -137,11 +128,6 @@ app.post('/eventGet', (req, res) => {
 app.post('/scriptId', (req, res) => {
     saveScriptId(req.body, website[0]);
     res.send("scriptId-success");
-})
-
-app.post('/debug', (req, res) => {
-    debugInfo(req.body, website[0]);
-    res.send("debug-success");
 })
 
 app.listen(port, () => {

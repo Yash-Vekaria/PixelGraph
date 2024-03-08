@@ -1,34 +1,6 @@
 window.tabId = 0;
 const port = 8000;
 
-// Function to return header strings by concatinating individual headers
-function getHeaderString(headers) {
-    let responseHeaderString = '';
-    headers.forEach((header, key) => {
-        responseHeaderString += key + ':' + header + '\n';
-    });
-    return responseHeaderString;
-}
-
-// Function to perform XHR request to the input URL based on the other parameters
-async function xhrSend(url, headers, method, postData, success, error) {
-    let finalResponse = {};
-    let response = await fetch(url, {
-        method,
-        mode: 'cors',
-        headers,
-        redirect: 'follow',
-        body: postData
-    });
-    finalResponse.response = await response.text();
-    finalResponse.headers = getHeaderString(response.headers);
-    if (response.ok) {
-        success(finalResponse);
-    } else {
-        error(finalResponse);
-    }
-}
-
 // Listening for and capturing Network events
 function onEvent(debugId, message, params) {
     if (tabId != debugId.tabId)
@@ -114,28 +86,6 @@ function onEvent(debugId, message, params) {
             }
         }).then(res => {
             console.log("scriptId data collected.");
-        });
-    }
-    // Handling to resume the debugger in case of set breakpoints or error
-    if (message == "Debugger.paused") {
-        fetch(`http://localhost:${port}/debug`, {
-            method: "POST",
-            body: JSON.stringify({
-                "reason": params.reason,
-                "heap": params.callFrames,
-                "data": params.data,
-                "stack": params.asyncStackTrace,
-                "hitBreakpoints": params.hitBreakpoints
-            }),
-            mode: 'cors',
-            headers: {
-                'Access-Control-Allow-Origin': '*',
-                "Content-Type": "application/json"
-            }
-        }).then(res => {
-            chrome.debugger.sendCommand({
-                tabId: debugId.tabId
-            }, 'Debugger.resume');
         });
     }
 }
