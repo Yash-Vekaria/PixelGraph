@@ -22,42 +22,55 @@ function sendDataToServer(path, data) {
 // These enable normal functioning of the page in case of errors in overriden logic or to perform normal functionality
 var cookieGetter = document.__lookupGetter__("cookie").bind(document);
 var cookieSetter = document.__lookupSetter__("cookie").bind(document);
-// Monitoring access to document.cookie
+// Overriding document.cookie
 Object.defineProperty(document, 'cookie', {
-    // overriding getting document.cookie
     get: function() {
         var storedCookieStr = cookieGetter();
-        sendDataToServer("storage", {"top_level_url": window.location.href, "function": "cookieGetter", "cookie": storedCookieStr, "stack": new Error().stack});
-        // Ensuring normal functionality
+        sendDataToServer("storage", {
+            "top_level_url": window.location.href, 
+            "function": "cookieGetter", 
+            "cookie": storedCookieStr, 
+            "stack": new Error().stack
+        });
         return cookieGetter();
     },
-    // overriding setting document.cookie
     set: function(cookieString) {
-        sendDataToServer("storage", {"top_level_url": window.location.href, "function": "cookieSetter", "cookie": cookieString, "stack": new Error().stack});
-        // Ensuring normal functionality
+        sendDataToServer("storage", {
+            "top_level_url": window.location.href, 
+            "function": "cookieSetter", 
+            "cookie": cookieString, 
+            "stack": new Error().stack
+        });
         return cookieSetter(cookieString);
     }
 });
 
-// Monitoring access to local and session storage to get any information as key
-// Storing the original function prototype of getItem for usage under error or to perform normal functionality
+// Monitoring access to local and session storage to get and set of any information
+// Storing the original function prototype of getItem and setItem to perform normal functionality
 let getStorageFunction = window.Storage.prototype.getItem;
-// Overriding getItem
+let setStorageFunction = window.Storage.prototype.setItem;
+// Overriding Storage.getItem
 window.Storage.prototype.getItem = function(keyName) {
     let value = getStorageFunction.apply(this, arguments);
-    sendDataToServer("storage", {"top_level_url": window.location.href, "function": "storageGetter", "storage": {keyName}, "stack": new Error().stack});
-    // Ensuring normal functionality
+    sendDataToServer("storage", {
+        "top_level_url": window.location.href, 
+        "function": "storageGetter", 
+        "storage": {keyName}, 
+        "stack": new Error().stack
+    });
     return value;
 }
-
-// Monitoring access to local and session storage to set any information as key, value pair
-// Storing the original function prototype of setItem for usage under error or to perform normal functionality
-let setStorageFunction = window.Storage.prototype.setItem;
-// Overriding setItem
+// Overriding Storage.setItem
 window.Storage.prototype.setItem = function(keyName, keyValue) {
     setStorageFunction.apply(this, arguments);
-    sendDataToServer("storage", {"top_level_url": window.location.href, "function": "storageSetter", "storage": {"keyName": keyName, "keyValue": keyValue}, "stack": new Error().stack});
-    // Ensuring normal functionality
+    sendDataToServer("storage", {
+        "top_level_url": window.location.href, 
+        "function": "storageSetter", 
+        "storage": {
+            "keyName": keyName, 
+            "keyValue": keyValue}, 
+        "stack": new Error().stack
+    });
     return;
 }
 
@@ -70,8 +83,15 @@ var addEventListnerPrototype = EventTarget.prototype.addEventListener;
 // Overriding addEventListener
 EventTarget.prototype.addEventListener = function(type, func, capture) {
     addEventListnerPrototype.apply(this, arguments)
-    sendDataToServer("eventSet", {"top_level_url": window.location.href, "function": "addEventListener", "event": func, "type": type, "capture": capture, "this": JSON.stringify(this), "stack": new Error().stack});
-    // Ensuring normal functionality
+    sendDataToServer("eventSet", {
+        "top_level_url": window.location.href, 
+        "function": "addEventListener", 
+        "event": func, 
+        "type": type, 
+        "capture": capture, 
+        "this": JSON.stringify(this), 
+        "stack": new Error().stack
+    });
     return;
 }
 
@@ -81,8 +101,15 @@ var removeEventListenerPrototype = EventTarget.prototype.removeEventListener;
 // Overriding removeEventListener
 EventTarget.prototype.removeEventListener = function(type, func, capture) {
     removeEventListenerPrototype.apply(this, arguments)
-    sendDataToServer("eventSet", {"top_level_url": window.location.href, "function": "removeEventListener", "event": func, "type": type, "capture": capture, "this": String(this), "stack": new Error().stack});
-    // Ensuring normal functionality
+    sendDataToServer("eventSet", {
+        "top_level_url": window.location.href, 
+        "function": "removeEventListener", 
+        "event": func, 
+        "type": type, 
+        "capture": capture, 
+        "this": String(this), 
+        "stack": new Error().stack
+    });
     return;
 }
 
@@ -92,8 +119,15 @@ var setAttributePrototype = Element.prototype.setAttribute;
 // Overriding setAttribute
 Element.prototype.setAttribute = function(name, value) {
     setAttributePrototype.apply(this, arguments)
-    sendDataToServer("eventSet", {"top_level_url": window.location.href, "function": "setAttribute", "event": "setAttribute", "name": name, "value": value, "this": String(this), "stack": new Error().stack});
-    // Ensuring normal functionality
+    sendDataToServer("eventSet", {
+        "top_level_url": window.location.href, 
+        "function": "setAttribute", 
+        "event": "setAttribute", 
+        "name": name, 
+        "value": value, 
+        "this": String(this), 
+        "stack": new Error().stack
+    });
     return;
 }
 
@@ -103,8 +137,15 @@ var getAttributePrototype = Element.prototype.getAttribute;
 // Overriding getAttribute
 Element.prototype.getAttribute = function(name) {
     let value = getAttributePrototype.apply(this, arguments)
-    sendDataToServer("eventGet", {"top_level_url": window.location.href, "function": "getAttribute", "event": "getAttribute", "name": name, "value": value, "this": String(this), "stack": new Error().stack});
-    // Ensuring normal functionality
+    sendDataToServer("eventGet", {
+        "top_level_url": window.location.href, 
+        "function": "getAttribute", 
+        "event": "getAttribute", 
+        "name": name, 
+        "value": value, 
+        "this": String(this), 
+        "stack": new Error().stack
+    });
     return value;
 }
 
@@ -114,8 +155,14 @@ var removeAttributePrototype = Element.prototype.removeAttribute;
 // Overriding removeAttribute
 Element.prototype.removeAttribute = function(name) {
     removeAttributePrototype.apply(this, arguments)
-    sendDataToServer("eventSet", {"top_level_url": window.location.href, "function": "removeAttribute", "event": "removeAttribute", "name": name, "this": String(this), "stack": new Error().stack});
-    // Ensuring normal functionality
+    sendDataToServer("eventSet", {
+        "top_level_url": window.location.href, 
+        "function": "removeAttribute", 
+        "event": "removeAttribute", 
+        "name": name, 
+        "this": String(this), 
+        "stack": new Error().stack
+    });
     return;
 }
 
@@ -127,8 +174,14 @@ Element.prototype.removeAttribute = function(name) {
 var originalCreateElement = document.createElement.bind(document);
 // Overriding document.createElement
 document.createElement = function(tagName, options) {
-    sendDataToServer("element", {"top_level_url": window.location.href, "function": "createElement", "tagName": tagName, "options": JSON.stringify(options), "this": String(this), "stack": new Error().stack});
-    // Ensuring normal functionality
+    sendDataToServer("element", {
+        "top_level_url": window.location.href, 
+        "function": "createElement", 
+        "tagName": tagName, 
+        "options": JSON.stringify(options), 
+        "this": String(this), 
+        "stack": new Error().stack
+    });
     return originalCreateElement(tagName, options);
 };
 
@@ -137,15 +190,24 @@ document.createElement = function(tagName, options) {
 const originalImagePrototype = HTMLImageElement.prototype;
 const imgHandler = {
     get(target, property, receiver) {
-        // Maintaining the default behaviour using Reflect.get and getting the actual property value
         const value = Reflect.get(...arguments);
-        sendDataToServer("element", {"top_level_url": window.location.href, "function": "getHTMLImageElement", "property": property, "propertyValue": value, "stack": new Error().stack});
-        // Ensuring normal functionality
+        sendDataToServer("element", {
+            "top_level_url": window.location.href, 
+            "function": "getHTMLImageElement", 
+            "property": property, 
+            "propertyValue": value, 
+            "stack": new Error().stack
+        });
         return value;
     },
     set(target, property, value, receiver) {
-        sendDataToServer("element", {"top_level_url": window.location.href, "function": "setHTMLImageElement", "property": property, "propertyValue": value, "stack": new Error().stack});
-        // Ensuring normal functionality
+        sendDataToServer("element", {
+            "top_level_url": window.location.href, 
+            "function": "setHTMLImageElement", 
+            "property": property, 
+            "propertyValue": value, 
+            "stack": new Error().stack
+        });
         return Reflect.set(...arguments);
     }
 };
@@ -157,15 +219,24 @@ HTMLImageElement.prototype = new Proxy(originalImagePrototype, imgHandler);
 const originalScriptPrototype = HTMLScriptElement.prototype;
 const scriptHandler = {
     get(target, property, receiver) {
-        // Maintaining the default behaviour using Reflect.get and getting the actual property value
         const value = Reflect.get(...arguments);
-        sendDataToServer("element", {"top_level_url": window.location.href, "function": "getHTMLScriptElement", "property": property, "propertyValue": value, "stack": new Error().stack});
-        // Ensuring normal functionality
+        sendDataToServer("element", {
+            "top_level_url": window.location.href, 
+            "function": "getHTMLScriptElement", 
+            "property": property, 
+            "propertyValue": value, 
+            "stack": new Error().stack
+        });
         return value;
     },
     set(target, property, value, receiver) {
-        sendDataToServer("element", {"top_level_url": window.location.href, "function": "setHTMLScriptElement", "property": property, "propertyValue": value, "stack": new Error().stack});
-        // Ensuring normal functionality
+        sendDataToServer("element", {
+            "top_level_url": window.location.href, 
+            "function": "setHTMLScriptElement", 
+            "property": property, 
+            "propertyValue": value, 
+            "stack": new Error().stack
+        });
         return Reflect.set(...arguments);
     }
 };
@@ -177,15 +248,24 @@ HTMLScriptElement.prototype = new Proxy(originalScriptPrototype, scriptHandler);
 const originalIFramePrototype = HTMLIFrameElement.prototype;
 const iframeHandler = {
     get(target, property, receiver) {
-        // Maintaining the default behaviour using Reflect.get and getting the actual property value
         const value = Reflect.get(...arguments);
-        sendDataToServer("element", {"top_level_url": window.location.href, "function": "getHTMLIFrameElement", "property": property, "propertyValue": value, "stack": new Error().stack});
-        // Ensuring normal functionality
+        sendDataToServer("element", {
+            "top_level_url": window.location.href, 
+            "function": "getHTMLIFrameElement", 
+            "property": property, 
+            "propertyValue": value, 
+            "stack": new Error().stack
+        });
         return value;
     },
     set(target, property, value, receiver) {
-        sendDataToServer("element", {"top_level_url": window.location.href, "function": "setHTMLIFrameElement", "property": property, "propertyValue": value, "stack": new Error().stack});
-        // Ensuring normal functionality
+        sendDataToServer("element", {
+            "top_level_url": window.location.href, 
+            "function": "setHTMLIFrameElement", 
+            "property": property, 
+            "propertyValue": value, 
+            "stack": new Error().stack
+        });
         return Reflect.set(...arguments);
     }
 };
@@ -197,15 +277,24 @@ HTMLIFrameElement.prototype = new Proxy(originalIFramePrototype, iframeHandler);
 const originalCanvasPrototype = HTMLCanvasElement.prototype;
 const canvasHandler = {
     get(target, property, receiver) {
-        // Maintaining the default behaviour using Reflect.get and getting the actual property value
         const value = Reflect.get(...arguments);
-        sendDataToServer("element", {"top_level_url": window.location.href, "function": "getHTMLCanvasElement", "property": property, "propertyValue": value, "stack": new Error().stack});
-        // Ensuring normal functionality
+        sendDataToServer("element", {
+            "top_level_url": window.location.href, 
+            "function": "getHTMLCanvasElement", 
+            "property": property, 
+            "propertyValue": value, 
+            "stack": new Error().stack
+        });
         return value;
     },
     set(target, property, value, receiver) {
-        sendDataToServer("element", {"top_level_url": window.location.href, "function": "setHTMLCanvasElement", "property": property, "propertyValue": value, "stack": new Error().stack});
-        // Ensuring normal functionality
+        sendDataToServer("element", {
+            "top_level_url": window.location.href, 
+            "function": "setHTMLCanvasElement", 
+            "property": property, 
+            "propertyValue": value, 
+            "stack": new Error().stack
+        });
         return Reflect.set(...arguments);
     }
 };
@@ -217,22 +306,27 @@ HTMLCanvasElement.prototype = new Proxy(originalCanvasPrototype, canvasHandler);
 
 // Monitoring window.name
 // Extracting the original functions responsible for getting and setting name using window.name by binding .this to document
-// These enable normal functioning of the page in case of errors in overriden logic or to perform normal functionality
 var nameGetter = window.__lookupGetter__("name").bind(window);
 var nameSetter = window.__lookupSetter__("name").bind(window);
-// Monitoring access to window.name
+// Overriding access to window.name
 Object.defineProperty(window, 'name', {
-    // overriding getting window.name
     get: function() {
         var storedName = nameGetter();
-        sendDataToServer("property", {"top_level_url": window.location.href, "function": "window.nameGetter", "name": storedName, "stack": new Error().stack});
-        // Ensuring normal functionality
+        sendDataToServer("property", {
+            "top_level_url": window.location.href, 
+            "function": "window.nameGetter", 
+            "name": storedName, 
+            "stack": new Error().stack
+        });
         return nameGetter();
     },
-    // overriding setting window.name
     set: function(nameValue) {
-        sendDataToServer("property", {"top_level_url": window.location.href, "function": "window.nameSetter", "name": nameValue, "stack": new Error().stack});
-        // Ensuring normal functionality
+        sendDataToServer("property", {
+            "top_level_url": window.location.href, 
+            "function": "window.nameSetter", 
+            "name": nameValue, 
+            "stack": new Error().stack
+        });
         return nameSetter(nameValue);
     }
 });
@@ -243,15 +337,22 @@ var originalReferrer = document.referrer;
 // Overriding document.referrer
 Object.defineProperty(document, 'referrer', {
     get: function() {
-        sendDataToServer("property", {"top_level_url": window.location.href, "function": "document.referrerGetter", "referrer": originalReferrer, "stack": new Error().stack});
-        // Ensuring normal functionality
+        sendDataToServer("property", {
+            "top_level_url": window.location.href, 
+            "function": "document.referrerGetter", 
+            "referrer": originalReferrer, 
+            "stack": new Error().stack
+        });
         return originalReferrer;
     },
     set: function(newValue) {
-        sendDataToServer("property", {"top_level_url": window.location.href, "function": "document.referrerSetter", "referrer": newValue, "stack": new Error().stack});
-        // Ensuring normal functionality
-        // Since referrer is read only property
-        // originalReferrer = newValue;
+        sendDataToServer("property", {
+            "top_level_url": window.location.href, 
+            "function": "document.referrerSetter", 
+            "referrer": newValue, 
+            "stack": new Error().stack
+        });
+        // originalReferrer = newValue; // Commented since referrer is read only property
     },
     configurable: true
 });
@@ -262,14 +363,21 @@ const originalScreen = window.screen;
 // Creating a proxy object to override screen properties
 const screenProxy = new Proxy(originalScreen, {
     get(target, property) {
-        sendDataToServer("property", {"top_level_url": window.location.href, "function": "window.screenGetter", "property": property, "propertyValue": target[property], "stack": new Error().stack});
-        // Ensuring the normal functionality
+        sendDataToServer("property", {
+            "top_level_url": window.location.href, 
+            "function": "window.screenGetter", 
+            "property": property, 
+            "propertyValue": target[property], 
+            "stack": new Error().stack
+        });
         return target[property];
     }
 });
 // Overriding window.screen with the proxy object
 Object.defineProperty(window, 'screen', {
-    get: function() {return screenProxy;},
+    get: function() {
+        return screenProxy;
+    },
     configurable: true
 });
 
@@ -282,8 +390,13 @@ const originalNavigator = window.navigator;
 // Creating a proxy object to override window.navigator properties
 const navigatorProxy = new Proxy(originalNavigator, {
     get(target, property) {
-        sendDataToServer("fingerprinting", {"top_level_url": window.location.href, "function": "window.navigatorGetter", "property": property, "propertyValue": target[property], "stack": new Error().stack});
-        // Ensuring the normal functionality
+        sendDataToServer("fingerprinting", {
+            "top_level_url": window.location.href, 
+            "function": "window.navigatorGetter", 
+            "property": property, 
+            "propertyValue": target[property], 
+            "stack": new Error().stack
+        });
         return target[property];
     }
 });
@@ -291,7 +404,12 @@ const navigatorProxy = new Proxy(originalNavigator, {
 Object.defineProperty(window, 'navigator', {
     get: function() {return navigatorProxy;},
     set: function(newValue) {
-        sendDataToServer("fingerprinting", {"top_level_url": window.location.href, "function": "window.navigatorSetter", "newValue": JSON.stringify(newValue), "stack": new Error().stack});
+        sendDataToServer("fingerprinting", {
+            "top_level_url": window.location.href, 
+            "function": "window.navigatorSetter", 
+            "newValue": JSON.stringify(newValue), 
+            "stack": new Error().stack
+        });
         // Overriding the overrided navigator or not
         // window.navigator = originalNavigator; // Keeping the original navigator
     },
@@ -308,18 +426,30 @@ const monitoredClasses = [
     AudioContext,
     RTCPeerConnection
 ];
-
 monitoredClasses.forEach((OriginalClass) => {
     window[OriginalClass.name] = new Proxy(OriginalClass, {
         construct(target, args) {
-            sendDataToServer("fingerprinting", {"top_level_url": window.location.href, "function": OriginalClass.name, "type": "apiInstantiation", "arguments": args, "timestamp": new Date().toISOString(), "stack": new Error().stack});
-            // Retaining other arguments for OriginalClass and returning overriden object with get and set updated as below
+            sendDataToServer("fingerprinting", {
+                "top_level_url": window.location.href, 
+                "function": OriginalClass.name, 
+                "type": "apiInstantiation", 
+                "arguments": args, 
+                "timestamp": new Date().toISOString(), 
+                "stack": new Error().stack
+            });
             const instance = new target(...args);
             // Return a proxy to wrap the instance for future access monitoring
             return new Proxy(instance, {
                 get(target, prop, receiver) {
                     const originalProperty = Reflect.get(target, prop, receiver);
-                    sendDataToServer("fingerprinting", {"top_level_url": window.location.href, "function": OriginalClass.name, "type": "get", "property": prop, "timestamp": new Date().toISOString(), "stack": new Error().stack});
+                    sendDataToServer("fingerprinting", {
+                        "top_level_url": window.location.href, 
+                        "function": OriginalClass.name, 
+                        "type": "get", 
+                        "property": prop, 
+                        "timestamp": new Date().toISOString(), 
+                        "stack": new Error().stack
+                    });
                     if (typeof originalProperty === 'function') {
                         return function(...args) {
                             return originalProperty.apply(target, args);
@@ -328,7 +458,14 @@ monitoredClasses.forEach((OriginalClass) => {
                     return originalProperty;
                 },
                 set(target, prop, value, receiver) {
-                    sendDataToServer("fingerprinting", {"top_level_url": window.location.href, "function": OriginalClass.name, "type": "set", "value": value, "timestamp": new Date().toISOString(), "stack": new Error().stack});
+                    sendDataToServer("fingerprinting", {
+                        "top_level_url": window.location.href, 
+                        "function": OriginalClass.name, 
+                        "type": "set", 
+                        "value": value, 
+                        "timestamp": new Date().toISOString(), 
+                        "stack": new Error().stack
+                    });
                     return Reflect.set(target, prop, value, receiver);
                 }
             });
@@ -352,28 +489,39 @@ const excludedProperties = [
     "canvas",
     "translate"
 ];
-
 // Storing the original function prototype of CanvasRenderingContext2D for usage under error or to perform normal functionality
 const contextPrototype = CanvasRenderingContext2D.prototype;
 // Creating a proxy handler
 const handler = {
     get(target, prop, receiver) {
-        // Checking if the property is excluded
         if (excludedProperties.includes(prop)) {
             return Reflect.get(target, prop, receiver);
         }
-        // Ensuring the normal functionality
         const originalValue = Reflect.get(target, prop, receiver);
         // If the property is a function, wrap it
         if (typeof originalValue === 'function') {
             return function(...args) {
-                sendDataToServer("fingerprinting", {"top_level_url": window.location.href, "function": "CanvasRenderingContext2D", "method": prop, "arguments": args, "timestamp": new Date().toISOString(), "stack": new Error().stack});
+                sendDataToServer("fingerprinting", {
+                    "top_level_url": window.location.href, 
+                    "function": "CanvasRenderingContext2D", 
+                    "method": prop, 
+                    "arguments": args, 
+                    "timestamp": new Date().toISOString(), 
+                    "stack": new Error().stack
+                });
                 // Ensuring the normal functionality
                 return originalValue.apply(this, args);
             };
         } else {
             // Sending non-function property access details to the server
-            sendDataToServer("fingerprinting", {"top_level_url": window.location.href, "function": "CanvasRenderingContext2D", "property": "CanvasRenderingContext2D", "name": prop, "value": originalValue, "timestamp": new Date().toISOString(), "stack": new Error().stack});
+            sendDataToServer("fingerprinting", {
+                "top_level_url": window.location.href, 
+                "function": "CanvasRenderingContext2D",
+                "name": prop, 
+                "value": originalValue, 
+                "timestamp": new Date().toISOString(), 
+                "stack": new Error().stack
+            });
             return originalValue;
         }
     }
@@ -390,6 +538,13 @@ var sendBeaconPrototype = Navigator.prototype.sendBeacon;
 // Overriding sendBeacon
 Navigator.prototype.sendBeacon = function(url, data) {
     sendBeaconPrototype.apply(this, arguments)
-    sendDataToServer("request", {"top_level_url": window.location.href, "function": "sendBeacon", "property": "CanvasRenderingContext2D", "url": url, "this": String(this), "stack": new Error().stack});
+    sendDataToServer("request", {
+        "top_level_url": window.location.href, 
+        "function": "sendBeacon", 
+        "property": "CanvasRenderingContext2D", 
+        "url": url, 
+        "this": String(this), 
+        "stack": new Error().stack
+    });
     return;
 }

@@ -46,7 +46,7 @@ async function saveRequestInfo(receivedHTTPRequest, website) {
 }
 
 async function saveResponse(receivedHTTPResponse, website) {
-    const filename = 'output/' + website + '/responses.json';
+    const filename = 'output/' + website + '/response.json';
     jsonfile.writeFile(filename, receivedHTTPResponse, {
         flag: 'a'
     }, function(err) {
@@ -81,14 +81,42 @@ async function saveEventGet(receivedEventInfo, website) {
     })
 }
 
-async function saveScriptId(receivedScriptInfo, website) {
-    const filename = 'output/' + website + '/scriptIds.json';
+async function saveScript(receivedScriptInfo, website) {
+    const filename = 'output/' + website + '/script.json';
     jsonfile.writeFile(filename, receivedScriptInfo, {
         flag: 'a'
     }, function(err) {
         if (err) console.error(err);
     })
 }
+
+async function saveElement(receivedElementInfo, website) {
+    const filename = 'output/' + website + '/element.json';
+    jsonfile.writeFile(filename, receivedElementInfo, {
+        flag: 'a'
+    }, function(err) {
+        if (err) console.error(err);
+    })
+}
+
+async function saveProperty(receivedPropertyInfo, website) {
+    const filename = 'output/' + website + '/property.json';
+    jsonfile.writeFile(filename, receivedPropertyInfo, {
+        flag: 'a'
+    }, function(err) {
+        if (err) console.error(err);
+    })
+}
+
+async function saveFingerprinting(receivedFingerprintingInfo, website) {
+    const filename = 'output/' + website + '/fingerprinting.json';
+    jsonfile.writeFile(filename, receivedFingerprintingInfo, {
+        flag: 'a'
+    }, function(err) {
+        if (err) console.error(err);
+    })
+}
+
 
 // Listening for incoming requests
 
@@ -125,9 +153,24 @@ app.post('/eventGet', (req, res) => {
     res.send("eventGet-success");
 })
 
-app.post('/scriptId', (req, res) => {
-    saveScriptId(req.body, website[0]);
-    res.send("scriptId-success");
+app.post('/script', (req, res) => {
+    saveScript(req.body, website[0]);
+    res.send("script-success");
+})
+
+app.post('/element', (req, res) => {
+    saveElement(req.body, website[0]);
+    res.send("element-success");
+})
+
+app.post('/property', (req, res) => {
+    saveProperty(req.body, website[0]);
+    res.send("property-success");
+})
+
+app.post('/fingerprinting', (req, res) => {
+    saveFingerprinting(req.body, website[0]);
+    res.send("fingerprinting-success");
 })
 
 app.listen(port, () => {

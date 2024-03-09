@@ -46,7 +46,7 @@ function onEvent(debugId, message, params) {
             "connectTiming": params.connectTiming,
             "clientSecurityState": params.clientSecurityState
         });
-    } 
+    }
     else if (message == "Network.responseReceived") {
         chrome.debugger.sendCommand({
             tabId: tabId
