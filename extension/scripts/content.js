@@ -5,4 +5,4 @@ var injectJS = function(fileName) {
     s.src = chrome.extension.getURL(fileName);
     headElement.insertBefore(s, headElement.firstElementChild);
 };
-injectJS("inject.js");
+injectJS("scripts/inject.js");

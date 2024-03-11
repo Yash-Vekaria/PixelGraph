@@ -1,9 +1,11 @@
-window.tabId = 0;
+window.tabId = -1;
+window.website = '';
 const port = 8000;
 
 // Sending data from to my localhost server
 function sendDataToMyServer(path, data) {
-    fetch(`http://localhost:8000/${path}`, {
+    console.log(data)
+    fetch(`http://localhost:${port}/${path}`, {
         method: "POST",
         body: JSON.stringify(data),
         mode: 'cors',
@@ -26,6 +28,7 @@ function onEvent(debugId, message, params) {
         if (!params.request.url.includes('localhost')) {
             sendDataToMyServer("request", {
                 "function": "Network.requestWillBeSent",
+                "website": window.website,
                 "http_req": params.request.url,
                 "request_id": params.requestId,
                 "top_level_url": 0,
@@ -40,6 +43,7 @@ function onEvent(debugId, message, params) {
     } else if (message == "Network.requestWillBeSentExtraInfo") {
         sendDataToMyServer("request", {
             "function": "Network.requestWillBeSentExtraInfo",
+            "website": window.website,
             "request_id": params.requestId,
             "cookies": params.associatedCookies,
             "headers": params.headers,
@@ -55,6 +59,7 @@ function onEvent(debugId, message, params) {
         }, function(response) {
             sendDataToMyServer("response", {
                 "function": "Network.responseReceived",
+                "website": window.website,
                 "request_id": params.requestId,
                 "response": params.response,
                 "resource_type": params.type
@@ -65,6 +70,7 @@ function onEvent(debugId, message, params) {
     if (message == "Debugger.scriptParsed") {
         sendDataToMyServer("script", {
             "function": "Network.responseReceived",
+            "website": window.website,
             "scriptId": params.scriptId,
             "url": params.url
         });
@@ -72,29 +78,44 @@ function onEvent(debugId, message, params) {
 }
 
 // Entering debugging mode for the active tab
-chrome.tabs.query({
-        active: true
-    },
-    function(d) {
-        window.tabId = d[0].id;
-        chrome.debugger.attach({
-                tabId: tabId
-            }, "1.0",
-            function(err) {
-                if (err)
-                    console.log(err);
-                else
-                    console.log("Debugger attached.");
-            });
-        chrome.debugger.sendCommand({
-            tabId: tabId
-        }, "Network.enable");
-        chrome.debugger.sendCommand({
-            tabId: tabId
-        }, "Debugger.enable");
-        chrome.debugger.onEvent.addListener(onEvent);
+function attachDebuggerToTab(tabId) {
+    chrome.debugger.attach({ 
+        tabId: tabId 
+    }, 
+    "1.0", 
+    function() {
+        if (chrome.runtime.lastError) {
+            console.error("Debugger attach failed: ", chrome.runtime.lastError.message);
+        } else {
+            console.log("Debugger attached.");
+            chrome.debugger.sendCommand({ tabId: tabId }, "Network.enable");
+            chrome.debugger.sendCommand({ tabId: tabId }, "Debugger.enable");
+            chrome.debugger.onEvent.addListener(onEvent);
+        }
+    });
+}
+
+// Activating debugger on the newly active tab
+chrome.tabs.onActivated.addListener(activeInfo => {
+    chrome.tabs.get(activeInfo.tabId, function(tab) {
+        if (!tab.url.startsWith('chrome://')) {
+            window.tabId = tab.id;
+            window.website = new URL(tab.url).hostname;
+            console.log(window.tabId, window.website);
+            attachDebuggerToTab(tab.id);
+        }
+    });
+});
+
+// Updating debugger attachment for updated tabs (e.g., navigating to a new URL)
+chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
+    if (changeInfo.status === 'complete' && tab.active && !tab.url.startsWith('chrome://')) {
+        window.tabId = tabId;
+        window.website = new URL(tab.url).hostname;
+        console.log(window.tabId, window.website);
+        attachDebuggerToTab(tabId);
     }
-)
+});
 
 // Listen for clicks on the extension icon to display the message
 chrome.browserAction.onClicked.addListener(function(tab) {

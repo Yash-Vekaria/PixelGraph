@@ -9,9 +9,13 @@ venv/
 ENV/
 env.bak/
 venv.bak/
+**/.DS_Store
 
 # Cython debug symbols
 cython_debug/
 
 # Ignore node modules
 node_modules/
+
+# Ignore output data
+output/

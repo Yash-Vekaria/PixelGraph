@@ -27,7 +27,8 @@ Object.defineProperty(document, 'cookie', {
     get: function() {
         var storedCookieStr = cookieGetter();
         sendDataToServer("storage", {
-            "top_level_url": window.location.href, 
+            "top_level_url": window.location.href,
+            "website": window.location.hostname,
             "function": "cookieGetter", 
             "cookie": storedCookieStr, 
             "stack": new Error().stack
@@ -36,7 +37,8 @@ Object.defineProperty(document, 'cookie', {
     },
     set: function(cookieString) {
         sendDataToServer("storage", {
-            "top_level_url": window.location.href, 
+            "top_level_url": window.location.href,
+            "website": window.location.hostname,
             "function": "cookieSetter", 
             "cookie": cookieString, 
             "stack": new Error().stack
@@ -53,7 +55,8 @@ let setStorageFunction = window.Storage.prototype.setItem;
 window.Storage.prototype.getItem = function(keyName) {
     let value = getStorageFunction.apply(this, arguments);
     sendDataToServer("storage", {
-        "top_level_url": window.location.href, 
+        "top_level_url": window.location.href,
+        "website": window.location.hostname, 
         "function": "storageGetter", 
         "storage": {keyName}, 
         "stack": new Error().stack
@@ -64,7 +67,8 @@ window.Storage.prototype.getItem = function(keyName) {
 window.Storage.prototype.setItem = function(keyName, keyValue) {
     setStorageFunction.apply(this, arguments);
     sendDataToServer("storage", {
-        "top_level_url": window.location.href, 
+        "top_level_url": window.location.href,
+        "website": window.location.hostname,
         "function": "storageSetter", 
         "storage": {
             "keyName": keyName, 
@@ -84,7 +88,8 @@ var addEventListnerPrototype = EventTarget.prototype.addEventListener;
 EventTarget.prototype.addEventListener = function(type, func, capture) {
     addEventListnerPrototype.apply(this, arguments)
     sendDataToServer("eventSet", {
-        "top_level_url": window.location.href, 
+        "top_level_url": window.location.href,
+        "website": window.location.hostname,
         "function": "addEventListener", 
         "event": func, 
         "type": type, 
@@ -102,7 +107,8 @@ var removeEventListenerPrototype = EventTarget.prototype.removeEventListener;
 EventTarget.prototype.removeEventListener = function(type, func, capture) {
     removeEventListenerPrototype.apply(this, arguments)
     sendDataToServer("eventSet", {
-        "top_level_url": window.location.href, 
+        "top_level_url": window.location.href,
+        "website": window.location.hostname,
         "function": "removeEventListener", 
         "event": func, 
         "type": type, 
@@ -120,7 +126,8 @@ var setAttributePrototype = Element.prototype.setAttribute;
 Element.prototype.setAttribute = function(name, value) {
     setAttributePrototype.apply(this, arguments)
     sendDataToServer("eventSet", {
-        "top_level_url": window.location.href, 
+        "top_level_url": window.location.href,
+        "website": window.location.hostname,
         "function": "setAttribute", 
         "event": "setAttribute", 
         "name": name, 
@@ -138,7 +145,8 @@ var getAttributePrototype = Element.prototype.getAttribute;
 Element.prototype.getAttribute = function(name) {
     let value = getAttributePrototype.apply(this, arguments)
     sendDataToServer("eventGet", {
-        "top_level_url": window.location.href, 
+        "top_level_url": window.location.href,
+        "website": window.location.hostname,
         "function": "getAttribute", 
         "event": "getAttribute", 
         "name": name, 
@@ -156,7 +164,8 @@ var removeAttributePrototype = Element.prototype.removeAttribute;
 Element.prototype.removeAttribute = function(name) {
     removeAttributePrototype.apply(this, arguments)
     sendDataToServer("eventSet", {
-        "top_level_url": window.location.href, 
+        "top_level_url": window.location.href,
+        "website": window.location.hostname,
         "function": "removeAttribute", 
         "event": "removeAttribute", 
         "name": name, 
@@ -175,7 +184,8 @@ var originalCreateElement = document.createElement.bind(document);
 // Overriding document.createElement
 document.createElement = function(tagName, options) {
     sendDataToServer("element", {
-        "top_level_url": window.location.href, 
+        "top_level_url": window.location.href,
+        "website": window.location.hostname,
         "function": "createElement", 
         "tagName": tagName, 
         "options": JSON.stringify(options), 
@@ -192,7 +202,8 @@ const imgHandler = {
     get(target, property, receiver) {
         const value = Reflect.get(...arguments);
         sendDataToServer("element", {
-            "top_level_url": window.location.href, 
+            "top_level_url": window.location.href,
+            "website": window.location.hostname,
             "function": "getHTMLImageElement", 
             "property": property, 
             "propertyValue": value, 
@@ -202,7 +213,8 @@ const imgHandler = {
     },
     set(target, property, value, receiver) {
         sendDataToServer("element", {
-            "top_level_url": window.location.href, 
+            "top_level_url": window.location.href,
+            "website": window.location.hostname,
             "function": "setHTMLImageElement", 
             "property": property, 
             "propertyValue": value, 
@@ -221,7 +233,8 @@ const scriptHandler = {
     get(target, property, receiver) {
         const value = Reflect.get(...arguments);
         sendDataToServer("element", {
-            "top_level_url": window.location.href, 
+            "top_level_url": window.location.href,
+            "website": window.location.hostname,
             "function": "getHTMLScriptElement", 
             "property": property, 
             "propertyValue": value, 
@@ -231,7 +244,8 @@ const scriptHandler = {
     },
     set(target, property, value, receiver) {
         sendDataToServer("element", {
-            "top_level_url": window.location.href, 
+            "top_level_url": window.location.href,
+            "website": window.location.hostname,
             "function": "setHTMLScriptElement", 
             "property": property, 
             "propertyValue": value, 
@@ -250,7 +264,8 @@ const iframeHandler = {
     get(target, property, receiver) {
         const value = Reflect.get(...arguments);
         sendDataToServer("element", {
-            "top_level_url": window.location.href, 
+            "top_level_url": window.location.href,
+            "website": window.location.hostname,
             "function": "getHTMLIFrameElement", 
             "property": property, 
             "propertyValue": value, 
@@ -260,7 +275,8 @@ const iframeHandler = {
     },
     set(target, property, value, receiver) {
         sendDataToServer("element", {
-            "top_level_url": window.location.href, 
+            "top_level_url": window.location.href,
+            "website": window.location.hostname,
             "function": "setHTMLIFrameElement", 
             "property": property, 
             "propertyValue": value, 
@@ -279,7 +295,8 @@ const canvasHandler = {
     get(target, property, receiver) {
         const value = Reflect.get(...arguments);
         sendDataToServer("element", {
-            "top_level_url": window.location.href, 
+            "top_level_url": window.location.href,
+            "website": window.location.hostname,
             "function": "getHTMLCanvasElement", 
             "property": property, 
             "propertyValue": value, 
@@ -289,7 +306,8 @@ const canvasHandler = {
     },
     set(target, property, value, receiver) {
         sendDataToServer("element", {
-            "top_level_url": window.location.href, 
+            "top_level_url": window.location.href,
+            "website": window.location.hostname,
             "function": "setHTMLCanvasElement", 
             "property": property, 
             "propertyValue": value, 
@@ -313,7 +331,8 @@ Object.defineProperty(window, 'name', {
     get: function() {
         var storedName = nameGetter();
         sendDataToServer("property", {
-            "top_level_url": window.location.href, 
+            "top_level_url": window.location.href,
+            "website": window.location.hostname,
             "function": "window.nameGetter", 
             "name": storedName, 
             "stack": new Error().stack
@@ -322,7 +341,8 @@ Object.defineProperty(window, 'name', {
     },
     set: function(nameValue) {
         sendDataToServer("property", {
-            "top_level_url": window.location.href, 
+            "top_level_url": window.location.href,
+            "website": window.location.hostname,
             "function": "window.nameSetter", 
             "name": nameValue, 
             "stack": new Error().stack
@@ -338,7 +358,8 @@ var originalReferrer = document.referrer;
 Object.defineProperty(document, 'referrer', {
     get: function() {
         sendDataToServer("property", {
-            "top_level_url": window.location.href, 
+            "top_level_url": window.location.href,
+            "website": window.location.hostname,
             "function": "document.referrerGetter", 
             "referrer": originalReferrer, 
             "stack": new Error().stack
@@ -347,7 +368,8 @@ Object.defineProperty(document, 'referrer', {
     },
     set: function(newValue) {
         sendDataToServer("property", {
-            "top_level_url": window.location.href, 
+            "top_level_url": window.location.href,
+            "website": window.location.hostname,
             "function": "document.referrerSetter", 
             "referrer": newValue, 
             "stack": new Error().stack
@@ -364,7 +386,8 @@ const originalScreen = window.screen;
 const screenProxy = new Proxy(originalScreen, {
     get(target, property) {
         sendDataToServer("property", {
-            "top_level_url": window.location.href, 
+            "top_level_url": window.location.href,
+            "website": window.location.hostname,
             "function": "window.screenGetter", 
             "property": property, 
             "propertyValue": target[property], 
@@ -391,7 +414,8 @@ const originalNavigator = window.navigator;
 const navigatorProxy = new Proxy(originalNavigator, {
     get(target, property) {
         sendDataToServer("fingerprinting", {
-            "top_level_url": window.location.href, 
+            "top_level_url": window.location.href,
+            "website": window.location.hostname,
             "function": "window.navigatorGetter", 
             "property": property, 
             "propertyValue": target[property], 
@@ -405,7 +429,8 @@ Object.defineProperty(window, 'navigator', {
     get: function() {return navigatorProxy;},
     set: function(newValue) {
         sendDataToServer("fingerprinting", {
-            "top_level_url": window.location.href, 
+            "top_level_url": window.location.href,
+            "website": window.location.hostname,
             "function": "window.navigatorSetter", 
             "newValue": JSON.stringify(newValue), 
             "stack": new Error().stack
@@ -430,7 +455,8 @@ monitoredClasses.forEach((OriginalClass) => {
     window[OriginalClass.name] = new Proxy(OriginalClass, {
         construct(target, args) {
             sendDataToServer("fingerprinting", {
-                "top_level_url": window.location.href, 
+                "top_level_url": window.location.href,
+                "website": window.location.hostname,
                 "function": OriginalClass.name, 
                 "type": "apiInstantiation", 
                 "arguments": args, 
@@ -443,7 +469,8 @@ monitoredClasses.forEach((OriginalClass) => {
                 get(target, prop, receiver) {
                     const originalProperty = Reflect.get(target, prop, receiver);
                     sendDataToServer("fingerprinting", {
-                        "top_level_url": window.location.href, 
+                        "top_level_url": window.location.href,
+                        "website": window.location.hostname,
                         "function": OriginalClass.name, 
                         "type": "get", 
                         "property": prop, 
@@ -459,7 +486,8 @@ monitoredClasses.forEach((OriginalClass) => {
                 },
                 set(target, prop, value, receiver) {
                     sendDataToServer("fingerprinting", {
-                        "top_level_url": window.location.href, 
+                        "top_level_url": window.location.href,
+                        "website": window.location.hostname,
                         "function": OriginalClass.name, 
                         "type": "set", 
                         "value": value, 
@@ -502,7 +530,8 @@ const handler = {
         if (typeof originalValue === 'function') {
             return function(...args) {
                 sendDataToServer("fingerprinting", {
-                    "top_level_url": window.location.href, 
+                    "top_level_url": window.location.href,
+                    "website": window.location.hostname,
                     "function": "CanvasRenderingContext2D", 
                     "method": prop, 
                     "arguments": args, 
@@ -515,7 +544,8 @@ const handler = {
         } else {
             // Sending non-function property access details to the server
             sendDataToServer("fingerprinting", {
-                "top_level_url": window.location.href, 
+                "top_level_url": window.location.href,
+                "website": window.location.hostname,
                 "function": "CanvasRenderingContext2D",
                 "name": prop, 
                 "value": originalValue, 
@@ -539,7 +569,8 @@ var sendBeaconPrototype = Navigator.prototype.sendBeacon;
 Navigator.prototype.sendBeacon = function(url, data) {
     sendBeaconPrototype.apply(this, arguments)
     sendDataToServer("request", {
-        "top_level_url": window.location.href, 
+        "top_level_url": window.location.href,
+        "website": window.location.hostname,
         "function": "sendBeacon", 
         "property": "CanvasRenderingContext2D", 
         "url": url, 
