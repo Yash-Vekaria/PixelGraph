@@ -1,24 +1,103 @@
 window.tabId = -1;
 window.website = '';
 const port = 8000;
+const batchBuffer = {};
+const batchSizeLimit = 10;
+const paths = ['request', 'requestInfo', 'response', 'storage', 'eventSet', 'eventGet', 'script', 'element', 'property', 'fingerprinting'];
 
-// Sending data from to my localhost server
-function sendDataToMyServer(path, data) {
-    console.log(data)
-    fetch(`http://localhost:${port}/${path}`, {
-        method: "POST",
-        body: JSON.stringify(data),
-        mode: 'cors',
-        headers: {
-            'Access-Control-Allow-Origin': '*',
-            "Content-Type": "application/json"
-        }
-    }).then(res => {
-        console.log(`${data.function} data sent to server.`)
-    }).catch(err => {
-        console.error(`Error in sending ${data.function}:`, err)
+// Initialize batch buffer for each endpoint
+function initBatchBuffer(paths) {
+    paths.forEach(path => {
+        batchBuffer[path] = [];
     });
 }
+initBatchBuffer(paths);
+
+
+// Sending data to my localhost server in batches
+function flushBatchBuffer() {
+    const promises = [];
+    for (const path in batchBuffer) {
+        const dataBatch = batchBuffer[path];
+        console.log("Flushing", dataBatch.length, dataBatch);
+        if (dataBatch.length === 0) continue;
+        const promise = fetch(`http://localhost:${port}/${path}`, {
+            method: "POST",
+            body: JSON.stringify(dataBatch),
+            mode: 'cors',
+            headers: {
+                'Access-Control-Allow-Origin': '*',
+                "Content-Type": "application/json"
+            }
+        });
+        promises.push(promise);
+        batchBuffer[path] = [];
+    }
+    return Promise.all(promises);
+}
+
+// Collect data to send in batch
+function sendDataToMyServer(path, data) {
+    if (!batchBuffer[path]) {
+        batchBuffer[path] = [];
+    }
+    batchBuffer[path].push(data);
+    console.log("Batching", data);
+    if (batchBuffer[path].length >= batchSizeLimit) {
+        return flushBatchBuffer();
+    }
+    return Promise.resolve('Added to batch');
+}
+
+// Listening to messages from content script for receiving the intercepted data from injected script
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+    // console.log(message.data)
+    sendDataToMyServer(message.path, message.data)
+        .then(() => {
+            sendResponse({ 
+                success: true 
+            });
+        })
+        .catch(error => {
+            console.error('Error sending data to server:', error);
+            sendResponse({ 
+                success: false, 
+                error: error.toString() 
+            });
+        });
+    return true;  // To sendResponse asynchronously
+});
+
+/*
+// Sending data from to my localhost server
+function sendDataToMyServer(path, data) {
+    return new Promise((resolve, reject) => {
+        console.log(data);
+        fetch(`http://localhost:${port}/${path}`, {
+            method: "POST",
+            body: JSON.stringify(data),
+            mode: 'cors',
+            headers: {
+                'Access-Control-Allow-Origin': '*',
+                "Content-Type": "application/json"
+            }
+        })
+        .then(res => {
+            if (res.ok) {
+                console.log(`${data.function} data sent to server.`);
+                resolve(res);
+            } else {
+                throw new Error(`Server responded with status: ${res.status}`);
+            }
+        })
+        .catch(err => {
+            console.error(`Error in sending ${data.function}:`, err);
+            reject(err);
+        });
+    });
+}
+*/
+
 
 // Listening for and capturing Network events
 function onEvent(debugId, message, params) {
@@ -41,7 +120,7 @@ function onEvent(debugId, message, params) {
             });
         }
     } else if (message == "Network.requestWillBeSentExtraInfo") {
-        sendDataToMyServer("request", {
+        sendDataToMyServer("requestInfo", {
             "function": "Network.requestWillBeSentExtraInfo",
             "website": window.website,
             "request_id": params.requestId,
@@ -85,7 +164,8 @@ function attachDebuggerToTab(tabId) {
     "1.0", 
     function() {
         if (chrome.runtime.lastError) {
-            console.error("Debugger attach failed: ", chrome.runtime.lastError.message);
+            console.log("Debugger attach failed: ", chrome.runtime.lastError.message);
+            // console.error("Debugger attach failed: ", chrome.runtime.lastError.message);
         } else {
             console.log("Debugger attached.");
             chrome.debugger.sendCommand({ tabId: tabId }, "Network.enable");
@@ -113,9 +193,44 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
         window.tabId = tabId;
         window.website = new URL(tab.url).hostname;
         console.log(window.tabId, window.website);
+        chrome.tabs.sendMessage(tabId, {
+            type: 'crawlDomain', 
+            domain: window.website
+        });
         attachDebuggerToTab(tabId);
     }
 });
+
+// Inject JS inside an iframe at OnBeforeNavigated stage of its loading
+function injectInsideIframes(iframe) {
+    window.tabId = iframe.tabId;
+    window.frameId = iframe.frameId;
+    
+    chrome.tabs.get(window.tabId, function(tab) {
+        window.website = new URL(tab.url).hostname;
+
+        setTimeout(() => {
+            chrome.tabs.executeScript(
+                window.tabId, { 
+                    frameId: window.frameId, 
+                    file: "scripts/content.js", 
+                    matchAboutBlank: true 
+                },
+                function(result) {
+                    console.log(`Tab ID: ${window.tabId} | Frame ID: ${window.frameId} | Website: ${window.website}`);
+                    chrome.tabs.sendMessage(window.tabId, {
+                        type: 'crawlDomain', 
+                        domain: window.website
+                    });
+                }
+            );
+        }, 5);
+    });
+}
+
+// Injecting inject.js inside each iframe
+// OnBeforeNavigated Event is fired just before iframe navigations related to its loading starts
+chrome.webNavigation.onBeforeNavigate.addListener(injectInsideIframes);
 
 // Listen for clicks on the extension icon to display the message
 chrome.browserAction.onClicked.addListener(function(tab) {

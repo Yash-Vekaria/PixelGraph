@@ -3,7 +3,7 @@ const port = 8000;
 const express = require('express')
 const app = express();
 app.use(express.json({
-    limit: '100mb'
+    limit: '10000mb'
 }));
 
 const cors = require('cors');
@@ -14,11 +14,11 @@ app.use(cors({
 
 const bodyParser = require('body-parser');
 app.use(bodyParser.urlencoded({
-    limit: '100mb',
+    limit: '10000mb',
     extended: true
 }));
 app.use(bodyParser.json({
-    limit: '100mb'
+    limit: '10000mb'
 }));
 
 const fs = require('fs');
@@ -143,65 +143,154 @@ async function saveFingerprinting(receivedFingerprintingInfo, website) {
 // Listening for incoming requests
 
 app.post('/request', (req, res) => {
-    if (req.body.http_req != `http://localhost:${port}/storage`) {
-        website = req.body.website
-        req.body.top_level_url = website;
-        saveRequest(req.body, website);
+    // saveRequestInfo(req.body, website);
+    const requestData = req.body;
+    if (Array.isArray(requestData)) {
+        requestData.forEach(request => {
+            website = request.website;
+            console.log("[Request] Website:", website, request.top_level_url);
+            saveRequest(request, website);
+        });
+    } else {
+        console.error("Expected an array of request data");
     }
     res.send("request-success");
 })
 
 app.post('/requestInfo', (req, res) => {
-    website = req.body.website
-    saveRequestInfo(req.body, website);
+    // saveRequestInfo(req.body, website);
+    const requestInfoData = req.body;
+    if (Array.isArray(requestInfoData)) {
+        requestInfoData.forEach(requestInfo => {
+            website = requestInfo.website;
+            console.log("[RequestInfo] Website:", website, requestInfo.top_level_url);
+            saveRequestInfo(requestInfo, website);
+        });
+    } else {
+        console.error("Expected an array of requestInfo data");
+    }
     res.send("requestInfo-success");
 })
 
 app.post('/response', (req, res) => {
-    website = req.body.website
-    saveResponse(req.body, website);
+    // saveResponse(req.body, website);
+    const responseData = req.body;
+    if (Array.isArray(responseData)) {
+        responseData.forEach(response => {
+            website = response.website;
+            console.log("[Response] Website:", website, response.top_level_url);
+            saveResponse(response, website);
+        });
+    } else {
+        console.error("Expected an array of response data");
+    }
     res.send("response-success");
 })
 
 app.post('/storage', (req, res) => {
-    website = req.body.website
-    saveStorage(req.body, website);
+    // saveStorage(req.body, website);
+    const storageData = req.body;
+    if (Array.isArray(storageData)) {
+        storageData.forEach(storage => {
+            website = storage.website;
+            console.log("[Storage] Website:", website, storage.top_level_url);
+            saveStorage(storage, website);
+        });
+    } else {
+        console.error("Expected an array of storage data");
+    }
     res.send("storage-success");
 })
 
 app.post('/eventSet', (req, res) => {
-    website = req.body.website
-    saveEventSet(req.body, website);
+    // saveEventSet(req.body, website);
+    const eventSetData = req.body;
+    if (Array.isArray(eventSetData)) {
+        eventSetData.forEach(eventSet => {
+            website = eventSet.website;
+            console.log("[EventSet] Website:", website, eventSet.top_level_url);
+            saveEventSet(eventSet, website);
+        });
+    } else {
+        console.error("Expected an array of eventSet data");
+    }
     res.send("eventSet-success");
 })
 
 app.post('/eventGet', (req, res) => {
-    website = req.body.website
-    saveEventGet(req.body, website);
+    // saveEventGet(req.body, website);
+    const eventGetData = req.body;
+    if (Array.isArray(eventGetData)) {
+        eventGetData.forEach(eventGet => {
+            website = eventGet.website;
+            console.log("[EventGet] Website:", website, eventGet.top_level_url);
+            saveEventGet(eventGet, website);
+        });
+    } else {
+        console.error("Expected an array of eventGet data");
+    }
     res.send("eventGet-success");
 })
 
 app.post('/script', (req, res) => {
-    website = req.body.website
-    saveScript(req.body, website);
+    // saveScript(req.body, website);
+    const scriptData = req.body;
+    if (Array.isArray(scriptData)) {
+        scriptData.forEach(script => {
+            website = script.website;
+            console.log("[Script] Website:", website, script.top_level_url);
+            saveScript(script, website);
+        });
+    } else {
+        console.error("Expected an array of script data");
+    }
     res.send("script-success");
 })
 
 app.post('/element', (req, res) => {
-    website = req.body.website
-    saveElement(req.body, website);
+    // saveElement(req.body, website);
+    const elementData = req.body;
+    if (Array.isArray(elementData)) {
+        elementData.forEach(element => {
+            website = element.website;
+            console.log("[Element] Website:", website, element.top_level_url);
+            saveElement(element, website);
+        });
+    } else {
+        console.error("Expected an array of element data");
+    }
     res.send("element-success");
 })
 
 app.post('/property', (req, res) => {
-    website = req.body.website
-    saveProperty(req.body, website);
+    // saveProperty(req.body, website);
+    const propertyData = req.body;
+    if (Array.isArray(propertyData)) {
+        propertyData.forEach(property => {
+            website = property.website;
+            console.log("[Property] Website:", website, property.top_level_url);
+            saveProperty(property, website);
+        });
+    } else {
+        console.error("Expected an array of property data");
+    }
     res.send("property-success");
 })
 
 app.post('/fingerprinting', (req, res) => {
-    website = req.body.website
-    saveFingerprinting(req.body, website);
+    // saveFingerprinting(req.body, website);
+    const fingerprintingData = req.body;
+    if (Array.isArray(fingerprintingData)) {
+        fingerprintingData.forEach(fingerprint => {
+            website = fingerprint.website;
+            console.log("[Fingerprinting] Website:", website, fingerprint.top_level_url);
+            saveFingerprinting(fingerprint, website);
+        });
+    } else {
+        console.error("Expected an array of fingerprinting data");
+        console.log(typeof fingerprintingData);
+        console.log(fingerprintingData);
+    }
     res.send("fingerprinting-success");
 })
 
