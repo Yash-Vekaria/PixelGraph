@@ -2,7 +2,7 @@ window.tabId = -1;
 window.website = '';
 const port = 8000;
 const batchBuffer = {};
-const batchSizeLimit = 10;
+const batchSizeLimit = {'request': 10, 'requestInfo': 5, 'response': 10, 'storage': 5, 'eventSet': 5, 'eventGet': 5, 'script': 5, 'element': 5, 'property': 5, 'fingerprinting': 2};
 const paths = ['request', 'requestInfo', 'response', 'storage', 'eventSet', 'eventGet', 'script', 'element', 'property', 'fingerprinting'];
 
 // Initialize batch buffer for each endpoint
@@ -43,7 +43,7 @@ function sendDataToMyServer(path, data) {
     }
     batchBuffer[path].push(data);
     console.log("Batching", data);
-    if (batchBuffer[path].length >= batchSizeLimit) {
+    if (batchBuffer[path].length >= batchSizeLimit[path]) {
         return flushBatchBuffer();
     }
     return Promise.resolve('Added to batch');
@@ -103,6 +103,7 @@ function sendDataToMyServer(path, data) {
 function onEvent(debugId, message, params) {
     if (tabId != debugId.tabId)
         return;
+    /*
     if (message == "Network.requestWillBeSent") {
         if (!params.request.url.includes('localhost')) {
             sendDataToMyServer("request", {
@@ -154,6 +155,7 @@ function onEvent(debugId, message, params) {
             "url": params.url
         });
     }
+    */
 }
 
 // Entering debugging mode for the active tab

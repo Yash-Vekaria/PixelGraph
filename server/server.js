@@ -79,6 +79,16 @@ async function saveStorage(receivedStorageInfo, website) {
     })
 }
 
+async function saveEventGet(receivedEventInfo, website) {
+    const filename = '../output/' + website + '/eventGet.json';
+    createDirectory(filename);
+    jsonfile.writeFile(filename, receivedEventInfo, {
+        flag: 'a'
+    }, function(err) {
+        if (err) console.error(err);
+    })
+}
+
 async function saveEventSet(receivedEventInfo, website) {
     const filename = '../output/' + website + '/eventSet.json';
     createDirectory(filename);
@@ -89,8 +99,8 @@ async function saveEventSet(receivedEventInfo, website) {
     })
 }
 
-async function saveEventGet(receivedEventInfo, website) {
-    const filename = '../output/' + website + '/eventGet.json';
+async function saveEventRemove(receivedEventInfo, website) {
+    const filename = '../output/' + website + '/eventRemove.json';
     createDirectory(filename);
     jsonfile.writeFile(filename, receivedEventInfo, {
         flag: 'a'
@@ -202,6 +212,21 @@ app.post('/storage', (req, res) => {
     res.send("storage-success");
 })
 
+app.post('/eventGet', (req, res) => {
+    // saveEventGet(req.body, website);
+    const eventGetData = req.body;
+    if (Array.isArray(eventGetData)) {
+        eventGetData.forEach(eventGet => {
+            website = eventGet.website;
+            console.log("[EventGet] Website:", website, eventGet.top_level_url);
+            saveEventGet(eventGet, website);
+        });
+    } else {
+        console.error("Expected an array of eventGet data");
+    }
+    res.send("eventGet-success");
+})
+
 app.post('/eventSet', (req, res) => {
     // saveEventSet(req.body, website);
     const eventSetData = req.body;
@@ -217,19 +242,19 @@ app.post('/eventSet', (req, res) => {
     res.send("eventSet-success");
 })
 
-app.post('/eventGet', (req, res) => {
-    // saveEventGet(req.body, website);
-    const eventGetData = req.body;
-    if (Array.isArray(eventGetData)) {
-        eventGetData.forEach(eventGet => {
-            website = eventGet.website;
-            console.log("[EventGet] Website:", website, eventGet.top_level_url);
-            saveEventGet(eventGet, website);
+app.post('/eventRemove', (req, res) => {
+    // saveEventRemove(req.body, website);
+    const eventRemoveData = req.body;
+    if (Array.isArray(eventRemoveData)) {
+        eventRemoveData.forEach(eventRemove => {
+            website = eventRemove.website;
+            console.log("[EventRemove] Website:", website, eventRemove.top_level_url);
+            saveEventRemove(eventRemove, website);
         });
     } else {
-        console.error("Expected an array of eventGet data");
+        console.error("Expected an array of eventRemove data");
     }
-    res.send("eventGet-success");
+    res.send("eventRemove-success");
 })
 
 app.post('/script', (req, res) => {
