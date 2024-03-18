@@ -103,7 +103,6 @@ function sendDataToMyServer(path, data) {
 function onEvent(debugId, message, params) {
     if (tabId != debugId.tabId)
         return;
-    /*
     if (message == "Network.requestWillBeSent") {
         if (!params.request.url.includes('localhost')) {
             sendDataToMyServer("request", {
@@ -155,7 +154,6 @@ function onEvent(debugId, message, params) {
             "url": params.url
         });
     }
-    */
 }
 
 // Entering debugging mode for the active tab

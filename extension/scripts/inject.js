@@ -56,7 +56,7 @@ function hashString(str) {
     return hash;
 }
 
-// Setting to store hashes of already sent data
+// Storing hashes of already sent data
 window.sentDataHashes = window.sentDataHashes || new Set();
 // Sending intercepted data to background script as direct fetch() can cause CSP violation errors in iframes
 function sendMessageToBackground(path, data) {
@@ -80,7 +80,7 @@ function sendMessageToBackground(path, data) {
     sentDataHashes.add(dataHash);
 }
 
-/*
+// /*
 // ********************** NETWORK APIs **********************
 
 // Monitoring sendBeacon
@@ -90,7 +90,7 @@ var sendBeaconPrototype = Navigator.prototype.sendBeacon;
 Navigator.prototype.sendBeacon = function(url, data) {
     let thisStr;
     try {
-        thisStr = JSON.stringify(this, customSerializer(3));
+        thisStr = JSON.stringify(this, customSerializer(10));
     } catch (error) {
         thisStr = "SerializationFailed";
     }
@@ -325,8 +325,8 @@ if (typeof window.navigatorProxy === 'undefined') {
                 "website": window.currentCrawlDomain,
                 "function": "window.navigatorGetter", 
                 "property": property, 
-                "propertyValue": target[property], 
-                "stack": new Error().stack
+                "propertyValue": JSON.stringify(target[property]), 
+                "stack": JSON.stringify(new Error().stack)
             });
             return target[property];
         }
@@ -344,8 +344,8 @@ Object.defineProperty(window, 'navigator', {
             "top_level_url": window.location.href,
             "website": window.currentCrawlDomain,
             "function": "window.navigatorSetter", 
-            "newValue": JSON.stringify(newValue), 
-            "stack": new Error().stack
+            "newValue": JSON.stringify(newValue),
+            "stack": JSON.stringify(new Error().stack)
         });
         // Overriding the overrided navigator or not
         // window.navigator = originalNavigator; // Keeping the original navigator
@@ -483,4 +483,193 @@ if (typeof window.canvasContextProxyHandler === 'undefined') {
     // Overriding the prototype of CanvasRenderingContext2D with the proxy object
     CanvasRenderingContext2D.prototype = new Proxy(window.originalContextPrototype, window.canvasContextProxyHandler);
 };
-*/
+
+
+// ********************** ELEMENT APIs **********************
+
+// Monitoring createElement
+// Storing the original document.createElement function if not already stored
+if (typeof window.originalCreateElement === 'undefined') {
+    window.originalCreateElement = document.createElement.bind(document);
+}
+// Using the window object to ensure the flag is only set once globally
+if (typeof window.isCreatingElement === 'undefined') {
+    window.isCreatingElement = false;
+}
+document.createElement = function(tagName, options) {
+    if (window.isCreatingElement) {
+        return window.originalCreateElement(tagName, options);
+    }
+    window.isCreatingElement = true;
+    try {
+        let thisStr = "Document";
+        try {
+            thisStr = this ? JSON.stringify(this, customSerializer(10)) : "Document";
+        } catch (error) {
+            thisStr = "SerializationFailed";
+        }
+        let optionsStr = "NoOptions";
+        try {
+            optionsStr = options ? JSON.stringify(options, customSerializer(10)) : "NoOptions";
+        } catch (error) {
+            optionsStr = "SerializationFailed";
+        }
+        sendMessageToBackground("element", {
+            "top_level_url": window.location.href,
+            "website": window.currentCrawlDomain,
+            "function": "createElement",
+            "tagName": tagName,
+            "serialized_this": thisStr,
+            "serialized_options": optionsStr,
+            "stack": new Error().stack
+        });
+    } finally {
+        window.isCreatingElement = false;
+    }
+    return window.originalCreateElement(tagName, options);
+};
+
+// Monitoring HTMLImageElement
+if (typeof window.imgHandler === 'undefined') {
+    window.imgHandler = {
+        get(target, property, receiver) {
+            const value = Reflect.get(...arguments);
+            sendMessageToBackground("element", {
+                "top_level_url": window.location.href,
+                "website": window.currentCrawlDomain,
+                "function": "getHTMLImageElement", 
+                "property": property, 
+                "propertyValue": value, 
+                "stack": new Error().stack
+            });
+            return value;
+        },
+        set(target, property, value, receiver) {
+            sendMessageToBackground("element", {
+                "top_level_url": window.location.href,
+                "website": window.currentCrawlDomain,
+                "function": "setHTMLImageElement", 
+                "property": property, 
+                "propertyValue": value, 
+                "stack": new Error().stack
+            });
+            return Reflect.set(...arguments);
+        }
+    };
+}
+// Checking if the proxy has already been applied to avoid redefining originalImagePrototype
+if (typeof window.originalImagePrototype === 'undefined') {
+    // Storing the original HTMLImageElement prototype
+    window.originalImagePrototype = HTMLImageElement.prototype;
+    // Creating a proxy around the HTMLImageElement prototype
+    HTMLImageElement.prototype = new Proxy(window.originalImagePrototype, window.imgHandler);
+}
+
+// Monitoring HTMLScriptElement
+if (typeof window.scriptHandler === 'undefined') {
+    window.scriptHandler = {
+        get(target, property, receiver) {
+            const value = Reflect.get(...arguments);
+            sendMessageToBackground("element", {
+                "top_level_url": window.location.href,
+                "website": window.currentCrawlDomain,
+                "function": "getHTMLScriptElement", 
+                "property": property, 
+                "propertyValue": value, 
+                "stack": new Error().stack
+            });
+            return value;
+        },
+        set(target, property, value, receiver) {
+            sendMessageToBackground("element", {
+                "top_level_url": window.location.href,
+                "website": window.currentCrawlDomain,
+                "function": "setHTMLScriptElement", 
+                "property": property, 
+                "propertyValue": value, 
+                "stack": new Error().stack
+            });
+            return Reflect.set(...arguments);
+        }
+    };
+}
+// Checking if the proxy has already been applied to avoid redefining originalScriptPrototype
+if (typeof window.originalScriptPrototype === 'undefined') {
+    // Storing the original HTMLScriptElement prototype
+    window.originalScriptPrototype = HTMLScriptElement.prototype;
+    // Creating a proxy around the HTMLScriptElement prototype
+    HTMLScriptElement.prototype = new Proxy(window.originalScriptPrototype, window.scriptHandler);
+}
+
+// Monitoring HTMLIFrameElement
+if (typeof window.iframeHandler === 'undefined') {
+    window.iframeHandler = {
+        get(target, property, receiver) {
+            const value = Reflect.get(...arguments);
+            sendMessageToBackground("element", {
+                "top_level_url": window.location.href,
+                "website": window.currentCrawlDomain,
+                "function": "getHTMLIFrameElement", 
+                "property": property, 
+                "propertyValue": value, 
+                "stack": new Error().stack
+            });
+            return value;
+        },
+        set(target, property, value, receiver) {
+            sendMessageToBackground("element", {
+                "top_level_url": window.location.href,
+                "website": window.currentCrawlDomain,
+                "function": "setHTMLIFrameElement", 
+                "property": property, 
+                "propertyValue": value, 
+                "stack": new Error().stack
+            });
+            return Reflect.set(...arguments);
+        }
+    };
+}
+// Checking if the proxy has already been applied to avoid redefining originalIFramePrototype
+if (typeof window.originalIFramePrototype === 'undefined') {   
+    // Storing the original HTMLIFrameElement prototype
+    window.originalIFramePrototype = HTMLIFrameElement.prototype;
+    // Creating a proxy around the HTMLIFrameElement prototype
+    HTMLIFrameElement.prototype = new Proxy(window.originalIFramePrototype, window.iframeHandler);
+}
+
+// Monitoring HTMLCanvasElement
+if (typeof window.canvasHandler === 'undefined') {
+    window.canvasHandler = {
+        get(target, property, receiver) {
+            const value = Reflect.get(...arguments);
+            sendMessageToBackground("element", {
+                "top_level_url": window.location.href,
+                "website": window.currentCrawlDomain,
+                "function": "getHTMLCanvasElement", 
+                "property": property, 
+                "propertyValue": value, 
+                "stack": new Error().stack
+            });
+            return value;
+        },
+        set(target, property, value, receiver) {
+            sendMessageToBackground("element", {
+                "top_level_url": window.location.href,
+                "website": window.currentCrawlDomain,
+                "function": "setHTMLCanvasElement", 
+                "property": property, 
+                "propertyValue": value, 
+                "stack": new Error().stack
+            });
+            return Reflect.set(...arguments);
+        }
+    };
+}
+// Checking if the proxy has already been applied to avoid redefining originalCanvasPrototype
+if (typeof window.originalCanvasPrototype === 'undefined') {
+    // Storing the original HTMLCanvasElement prototype
+    window.originalCanvasPrototype = HTMLCanvasElement.prototype;
+    // Creating a proxy around the HTMLCanvasElement prototype
+    HTMLCanvasElement.prototype = new Proxy(window.originalCanvasPrototype, window.canvasHandler);
+}
+// */
