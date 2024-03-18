@@ -80,7 +80,7 @@ function sendMessageToBackground(path, data) {
     sentDataHashes.add(dataHash);
 }
 
-// /*
+
 // ********************** NETWORK APIs **********************
 
 // Monitoring sendBeacon
@@ -672,4 +672,3 @@ if (typeof window.originalCanvasPrototype === 'undefined') {
     // Creating a proxy around the HTMLCanvasElement prototype
     HTMLCanvasElement.prototype = new Proxy(window.originalCanvasPrototype, window.canvasHandler);
 }
-// */
