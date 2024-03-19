@@ -1,13 +1,17 @@
 // content script
 function injectJSWithDomain(domain) {
     var headElement = document.head || document.documentElement;
-    var scriptElement = document.createElement('script');
+    var scriptId = 'pixelGraphScript';
+    if (document.getElementById(scriptId)) {
+        console.log('Skipping Script Injection: inject.js is already injected!');
+        return;
+    }
 
-    // Fetch the script text from inject.js
+    var scriptElement = document.createElement('script');
+    scriptElement.id = scriptId;
     fetch(chrome.runtime.getURL('scripts/inject.js'))
         .then(response => response.text())
         .then(code => {
-            // Embed the domain directly into the script content
             scriptElement.textContent = `window.currentCrawlDomain = ${JSON.stringify(domain)};\n${code}`;
             headElement.insertBefore(scriptElement, headElement.firstElementChild);
         })
